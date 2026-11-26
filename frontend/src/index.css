@@ -1,0 +1,73 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Material-inspired design tokens. Values are RGB triplets so Tailwind can
+   apply alpha via rgb(var(--c-*) / <alpha-value>). */
+:root {
+  --c-primary: 79 70 229;        /* indigo-600 */
+  --c-primary-50: 238 242 255;
+  --c-primary-100: 224 231 255;
+  --c-primary-200: 199 210 254;
+  --c-primary-300: 165 180 252;
+  --c-primary-400: 129 140 248;
+  --c-primary-500: 99 102 241;
+  --c-primary-600: 79 70 229;
+  --c-primary-700: 67 56 202;
+  --c-primary-800: 55 48 163;
+  --c-primary-900: 49 46 129;
+  --c-primary-contrast: 255 255 255;
+  --c-accent: 13 148 136;        /* teal-600 */
+  --c-surface: 248 250 252;      /* slate-50 */
+  --c-surface-raised: 255 255 255;
+  --c-surface-sunken: 241 245 249;
+  --c-ink: 15 23 42;             /* slate-900 */
+  --c-ink-muted: 71 85 105;      /* slate-600 */
+  --c-ink-faint: 100 116 139;    /* slate-500 */
+  --c-line: 226 232 240;         /* slate-200 */
+}
+
+.dark {
+  --c-primary: 129 140 248;     /* indigo-400 for contrast on dark */
+  --c-primary-50: 30 27 75;
+  --c-primary-100: 49 46 129;
+  --c-primary-200: 55 48 163;
+  --c-primary-300: 67 56 202;
+  --c-primary-400: 99 102 241;
+  --c-primary-500: 129 140 248;
+  --c-primary-600: 165 180 252;
+  --c-primary-700: 199 210 254;
+  --c-primary-800: 224 231 255;
+  --c-primary-900: 238 242 255;
+  --c-primary-contrast: 30 27 75;
+  --c-accent: 45 212 191;       /* teal-400 */
+  --c-surface: 18 18 18;         /* Material dark baseline */
+  --c-surface-raised: 30 30 30;  /* elevation 2 */
+  --c-surface-sunken: 24 24 27;
+  --c-ink: 241 245 249;          /* slate-100 */
+  --c-ink-muted: 203 213 225;    /* slate-300 */
+  --c-ink-faint: 148 163 184;    /* slate-400 */
+  --c-line: 39 39 42;            /* zinc-800 */
+}
+
+@layer base {
+  html {
+    @apply scroll-smooth;
+  }
+  body {
+    @apply bg-surface text-ink font-body antialiased;
+    transition: background-color 200ms ease, color 200ms ease;
+  }
+  ::selection {
+    @apply bg-primary-200 text-primary-900;
+  }
+  .dark ::selection {
+    @apply bg-primary-700 text-primary-50;
+  }
+}
+
+@layer components {
+  .focus-ring {
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-surface;
+  }
+}

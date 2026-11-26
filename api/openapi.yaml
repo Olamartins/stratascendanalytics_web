@@ -1,0 +1,206 @@
+openapi: 3.1.0
+info:
+  title: Stratascend Analytics API
+  version: 0.1.0
+  description: Public catalog + admin CMS + Paystack checkout API. Admin endpoints require a JWT HttpOnly cookie.
+servers:
+  - url: http://localhost:4000
+    description: Local dev
+tags:
+  - name: auth
+  - name: pages
+  - name: products
+  - name: resources
+  - name: trainings
+  - name: checkout
+  - name: admin
+paths:
+  /api/health:
+    get:
+      summary: Liveness probe
+      responses:
+        '200': { description: OK }
+  /api/admin/login:
+    post:
+      tags: [auth]
+      summary: Admin login (sets HttpOnly cookie)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email: { type: string, format: email }
+                password: { type: string }
+      responses:
+        '200':
+          description: Logged in
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user: { $ref: '#/components/schemas/User' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+  /api/admin/logout:
+    post:
+      tags: [auth]
+      responses:
+        '200': { description: Cookie cleared }
+  /api/admin/me:
+    get:
+      tags: [auth]
+      security: [cookieAuth: []]
+      responses:
+        '200':
+          description: Current admin user
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user: { $ref: '#/components/schemas/User' }
+  /api/pages:
+    get:
+      tags: [pages]
+      summary: List published pages/posts
+      parameters:
+        - { name: type, in: query, schema: { type: string, enum: [page, post] } }
+        - { name: q, in: query, schema: { type: string } }
+      responses:
+        '200': { description: List of pages }
+  /api/pages/{slug}:
+    get:
+      tags: [pages]
+      parameters:
+        - { name: slug, in: path, required: true, schema: { type: string } }
+      responses:
+        '200': { description: Page with SEO meta }
+        '404': { description: Not found }
+  /api/products:
+    get:
+      tags: [products]
+      parameters:
+        - { name: type, in: query, schema: { type: string, enum: [ebook, template, solution] } }
+        - { name: q, in: query, schema: { type: string } }
+      responses:
+        '200': { description: Product catalog }
+  /api/products/{slug}:
+    get:
+      tags: [products]
+      responses:
+        '200': { description: Product detail }
+  /api/resources:
+    get:
+      tags: [resources]
+      parameters:
+        - { name: kind, in: query, schema: { type: string, enum: [powerbi, excel, ebook] } }
+      responses:
+        '200': { description: Resource list }
+  /api/resources/{slug}:
+    get:
+      tags: [resources]
+      responses:
+        '200': { description: Resource detail with preview }
+  /api/trainings:
+    get:
+      tags: [trainings]
+      responses:
+        '200': { description: Training list }
+  /api/trainings/{slug}:
+    get:
+      tags: [trainings]
+      responses:
+        '200': { description: Training detail (syllabus, schedules, capacity) }
+  /api/checkout/initiate:
+    post:
+      tags: [checkout]
+      summary: Create pending order and initialize a Paystack transaction
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, items]
+              properties:
+                email: { type: string, format: email }
+                name: { type: string }
+                items:
+                  type: array
+                  items:
+                    type: object
+                    required: [kind, id, qty]
+                    properties:
+                      kind: { type: string, enum: [product, resource, training] }
+                      id: { type: integer }
+                      qty: { type: integer, minimum: 1, default: 1 }
+      responses:
+        '200':
+          description: Paystack authorization URL
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  orderRef: { type: string }
+                  authorizationUrl: { type: string, format: uri }
+                  accessCode: { type: string }
+  /api/paystack/webhook:
+    post:
+      tags: [checkout]
+      summary: Paystack webhook (signature-verified; marks orders paid)
+      responses:
+        '200': { description: Acknowledged }
+  /api/search:
+    get:
+      parameters:
+        - { name: q, in: query, required: true, schema: { type: string } }
+      responses:
+        '200': { description: Unified search across pages/products/resources/trainings }
+  /api/admin/pages:
+    post:
+      tags: [admin]
+      security: [cookieAuth: []]
+      summary: Create page/post (admin/editor)
+      responses:
+        '201': { description: Created }
+  /api/admin/orders:
+    get:
+      tags: [admin]
+      security: [cookieAuth: []]
+      summary: List orders with filters (status, email)
+      responses:
+        '200': { description: Orders }
+  /api/admin/media/upload:
+    post:
+      tags: [admin]
+      security: [cookieAuth: []]
+      summary: Multipart file upload (images/files)
+      responses:
+        '201': { description: Media record }
+components:
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: strat_admin
+  schemas:
+    User:
+      type: object
+      properties:
+        id: { type: integer }
+        name: { type: string }
+        email: { type: string, format: email }
+        role: { type: string, enum: [admin, editor, viewer] }
+  responses:
+    Unauthorized:
+      description: Authentication required
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error: { type: string }
